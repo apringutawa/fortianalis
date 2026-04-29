@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: fortianalis-backend
+    ports:
+      - "8001:8001"
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - backend-uploads:/app/data/uploads
+    restart: unless-stopped
+    networks:
+      - fortianalis-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fortianalis-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8001
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - fortianalis-network
+
+volumes:
+  backend-uploads:
+    driver: local
+
+networks:
+  fortianalis-network:
+    driver: bridge
