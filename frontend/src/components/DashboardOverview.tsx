@@ -1,117 +1,145 @@
 'use client';
 
 import React from 'react';
-import { ShieldAlert, ShieldCheck, Activity, Globe, Sparkles } from 'lucide-react';
-import { 
+import {
+  ShieldAlert, ShieldCheck, Activity, Globe,
+  Sparkles, TrendingUp, Bot, Cpu,
+} from 'lucide-react';
+import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
+import type { AnalysisResult } from './UploadDropzone';
 
-const mockTimelineData = [
-  { time: '00:00', attacks: 120 },
-  { time: '04:00', attacks: 300 },
-  { time: '08:00', attacks: 150 },
-  { time: '12:00', attacks: 800 },
-  { time: '16:00', attacks: 400 },
-  { time: '20:00', attacks: 200 },
-];
+const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981'];
 
-const mockAttackTypes = [
-  { name: 'SQLi', value: 450 },
-  { name: 'XSS', value: 300 },
-  { name: 'Path Traversal', value: 200 },
-  { name: 'Bot', value: 150 },
-];
+interface DashboardOverviewProps {
+  result: AnalysisResult;
+}
 
-const mockSubdomains = [
-  { name: 'api.example.com', attacks: 800 },
-  { name: 'auth.example.com', attacks: 600 },
-  { name: 'www.example.com', attacks: 200 },
-];
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const COLORS = ['#06b6d4', '#3b82f6', '#8b5cf6', '#ec4899'];
+function StatCard({
+  label, value, icon: Icon, color, sub,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+  sub?: string;
+}) {
+  return (
+    <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center gap-4 hover:bg-white/8 transition-colors">
+      <div className={`p-3 rounded-xl bg-white/5 ${color}`}>
+        <Icon className="w-6 h-6" />
+      </div>
+      <div>
+        <p className="text-sm text-slate-400">{label}</p>
+        <p className="text-2xl font-bold text-slate-100">{value}</p>
+        {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
 
-export default function DashboardOverview() {
+function RiskBadge({ risk }: { risk: string }) {
+  const styles: Record<string, string> = {
+    High:   'bg-red-500/15 text-red-400 border-red-500/30',
+    Medium: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+    Low:    'bg-green-500/15 text-green-400 border-green-500/30',
+  };
+  return (
+    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full border ${styles[risk] ?? styles.Low}`}>
+      {risk}
+    </span>
+  );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+export default function DashboardOverview({ result }: DashboardOverviewProps) {
+  const { data, ai_insight, is_demo } = result;
+  const { stats, timelineData, attackTypes, subdomains, attackerIPs } = data;
+
+  const fmt = (n: number) => n.toLocaleString('id-ID');
+  const poweredByIcon = ai_insight.powered_by.includes('Gemini')
+    ? <Sparkles className="w-4 h-4" />
+    : <Cpu className="w-4 h-4" />;
+
   return (
     <div className="space-y-6">
 
-      {/* AI Insights Card */}
-      <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 backdrop-blur-md rounded-2xl p-6 relative overflow-hidden">
-        {/* Glow effect */}
-        <div className="absolute top-0 right-0 p-12 bg-purple-500/20 blur-[80px] rounded-full pointer-events-none" />
-        
-        <div className="flex items-start gap-4 relative z-10">
-          <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-xl mt-1">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <div className="flex-1 space-y-3">
-            <h3 className="text-lg font-semibold text-indigo-300">AI Generated Security Insight</h3>
-            <div className="space-y-2 text-slate-300 text-sm leading-relaxed">
-              <p>
-                <strong className="text-slate-100">Analisis:</strong> Terdeteksi lonjakan aktivitas tidak wajar sebesar <span className="text-red-400 font-bold">40%</span> pada <code className="bg-slate-800 px-1 py-0.5 rounded text-cyan-400">api.example.com</code> antara jam 12:00 hingga 14:00. Serangan didominasi oleh percobaan <strong>SQL Injection</strong> yang berasal dari IP range Rusia dan Tiongkok.
-              </p>
-              <p>
-                <strong className="text-slate-100">Rekomendasi Tindakan:</strong> WAF saat ini berhasil memblokir 98% serangan. Namun, disarankan untuk melakukan evaluasi <em>rate-limiting</em> spesifik pada endpoint <code>/v1/login</code> dan memastikan database sudah mengimplementasikan <em>prepared statements</em>.
-              </p>
-            </div>
-            <div className="pt-2">
-              <span className="text-xs text-slate-500">Powered by Gemini AI</span>
-            </div>
-          </div>
+      {/* Demo banner */}
+      {is_demo && (
+        <div className="flex items-center gap-3 px-5 py-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-amber-400 text-sm">
+          <Bot className="w-5 h-5 shrink-0" />
+          <span>
+            <strong>Demo Data:</strong> File tidak mengandung format log FortiWeb yang dikenali —
+            ditampilkan data simulasi untuk preview dashboard.
+          </span>
         </div>
+      )}
+
+      {/* ── Stats Row ────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard label="Total Requests" value={fmt(stats.totalRequests)}
+          icon={Activity} color="text-blue-400" />
+        <StatCard label="Total Attacks"  value={fmt(stats.totalAttacks)}
+          icon={ShieldAlert} color="text-red-400"
+          sub={`${((stats.totalAttacks / (stats.totalRequests || 1)) * 100).toFixed(1)}% attack rate`} />
+        <StatCard label="Blocked Attacks" value={fmt(stats.blockedAttacks)}
+          icon={ShieldCheck} color="text-emerald-400"
+          sub={`${stats.blockRate}% block rate`} />
+        <StatCard label="Unique IPs" value={fmt(stats.uniqueIps)}
+          icon={Globe} color="text-cyan-400" />
       </div>
 
-      {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: 'Total Requests', value: '45,231', icon: Activity, color: 'text-blue-400' },
-          { label: 'Total Attacks', value: '2,104', icon: ShieldAlert, color: 'text-red-400' },
-          { label: 'Blocked Attacks', value: '2,080', icon: ShieldCheck, color: 'text-green-400' },
-          { label: 'Unique IPs', value: '843', icon: Globe, color: 'text-emerald-400' },
-        ].map((stat, i) => (
-          <div key={i} className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center gap-4">
-            <div className={`p-3 rounded-xl bg-white/5 ${stat.color}`}>
-              <stat.icon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">{stat.label}</p>
-              <p className="text-2xl font-bold text-slate-100">{stat.value}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Charts Row */}
+      {/* ── Charts Row ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Timeline Chart */}
+
+        {/* Attack Timeline */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6">
-          <h3 className="text-lg font-medium text-slate-200 mb-6">Attack Timeline</h3>
-          <div className="h-64">
+          <div className="flex items-center gap-2 mb-5">
+            <TrendingUp className="w-5 h-5 text-cyan-400" />
+            <h3 className="text-base font-medium text-slate-200">Attack Timeline</h3>
+          </div>
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={mockTimelineData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                <XAxis dataKey="time" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+              <LineChart data={timelineData} margin={{ top: 5, right: 5, bottom: 0, left: -10 }}>
+                <defs>
+                  <linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#06b6d4" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#06b6d4" stopOpacity={0}   />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" vertical={false} />
+                <XAxis dataKey="time" stroke="#475569" tick={{ fontSize: 11 }} />
+                <YAxis stroke="#475569" tick={{ fontSize: 11 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', fontSize: 12 }}
+                  labelStyle={{ color: '#94a3b8' }}
                 />
-                <Line type="monotone" dataKey="attacks" stroke="#06b6d4" strokeWidth={3} dot={{ r: 4, fill: '#06b6d4' }} />
+                <Line
+                  type="monotone" dataKey="attacks" stroke="#06b6d4" strokeWidth={2.5}
+                  dot={{ r: 3, fill: '#06b6d4', strokeWidth: 0 }}
+                  activeDot={{ r: 5, fill: '#06b6d4' }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Subdomain Distribution */}
+        {/* Top Subdomains */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6">
-          <h3 className="text-lg font-medium text-slate-200 mb-6">Top Subdomains Attacked</h3>
-          <div className="h-64">
+          <h3 className="text-base font-medium text-slate-200 mb-5">Top Subdomains Attacked</h3>
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockSubdomains} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#334155" horizontal={false} />
-                <XAxis type="number" stroke="#94a3b8" />
-                <YAxis dataKey="name" type="category" width={120} stroke="#94a3b8" />
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+              <BarChart data={subdomains.slice(0, 8)} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 10 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
+                <XAxis type="number" stroke="#475569" tick={{ fontSize: 11 }} />
+                <YAxis dataKey="name" type="category" width={130} stroke="#475569" tick={{ fontSize: 10 }} />
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', fontSize: 12 }}
                 />
                 <Bar dataKey="attacks" fill="#3b82f6" radius={[0, 4, 4, 0]} />
               </BarChart>
@@ -120,70 +148,106 @@ export default function DashboardOverview() {
         </div>
       </div>
 
-      {/* Bottom Row */}
+      {/* ── Bottom Row ───────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 lg:col-span-1">
-          <h3 className="text-lg font-medium text-slate-200 mb-6">Attack Types</h3>
-          <div className="h-64">
+
+        {/* Attack Types Pie */}
+        <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6">
+          <h3 className="text-base font-medium text-slate-200 mb-4">Attack Types</h3>
+          <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={mockAttackTypes}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
+                  data={attackTypes.slice(0, 6)}
+                  cx="50%" cy="50%"
+                  innerRadius={52} outerRadius={72}
+                  paddingAngle={4} dataKey="value"
                 >
-                  {mockAttackTypes.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {attackTypes.slice(0, 6).map((_, index) => (
+                    <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                <Tooltip
+                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', fontSize: 12 }}
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="flex flex-wrap justify-center gap-4 mt-4">
-              {mockAttackTypes.map((type, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-slate-300">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
-                  {type.name}
-                </div>
-              ))}
-            </div>
+          </div>
+          {/* Legend */}
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-2">
+            {attackTypes.slice(0, 6).map((type, i) => (
+              <div key={i} className="flex items-center gap-1.5 text-xs text-slate-400">
+                <div className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: COLORS[i % COLORS.length] }} />
+                {type.name}
+              </div>
+            ))}
           </div>
         </div>
-        
+
+        {/* Top Attacker IPs */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 lg:col-span-2">
-           <h3 className="text-lg font-medium text-slate-200 mb-6">Top Attacker IPs</h3>
-           <div className="overflow-x-auto">
-             <table className="w-full text-sm text-left text-slate-300">
-               <thead className="text-xs text-slate-400 uppercase bg-white/5">
-                 <tr>
-                   <th className="px-6 py-3 rounded-tl-lg">IP Address</th>
-                   <th className="px-6 py-3">Country</th>
-                   <th className="px-6 py-3">Total Attacks</th>
-                   <th className="px-6 py-3 rounded-tr-lg">Risk</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {[
-                   { ip: '192.168.1.100', country: 'RU', count: 450, risk: 'High' },
-                   { ip: '10.0.0.55', country: 'CN', count: 320, risk: 'High' },
-                   { ip: '172.16.0.12', country: 'US', count: 150, risk: 'Medium' },
-                 ].map((row, i) => (
-                   <tr key={i} className="border-b border-white/5 hover:bg-white/5">
-                     <td className="px-6 py-4 font-mono">{row.ip}</td>
-                     <td className="px-6 py-4">{row.country}</td>
-                     <td className="px-6 py-4">{row.count}</td>
-                     <td className="px-6 py-4 text-red-400">{row.risk}</td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-           </div>
+          <h3 className="text-base font-medium text-slate-200 mb-4">Top Attacker IPs</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left">
+              <thead>
+                <tr className="text-xs text-slate-400 uppercase tracking-wider border-b border-white/10">
+                  <th className="pb-3 pr-4">#</th>
+                  <th className="pb-3 pr-4">IP Address</th>
+                  <th className="pb-3 pr-4">Country</th>
+                  <th className="pb-3 pr-4 text-right">Attacks</th>
+                  <th className="pb-3">Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attackerIPs.slice(0, 8).map((row, i) => (
+                  <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
+                    <td className="py-3 pr-4 text-slate-500 text-xs">{i + 1}</td>
+                    <td className="py-3 pr-4 font-mono text-cyan-300 text-xs group-hover:text-cyan-200">
+                      {row.ip}
+                    </td>
+                    <td className="py-3 pr-4 text-slate-400">{row.country}</td>
+                    <td className="py-3 pr-4 text-right text-slate-200 font-medium">
+                      {fmt(row.count)}
+                    </td>
+                    <td className="py-3">
+                      <RiskBadge risk={row.risk} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {attackerIPs.length === 0 && (
+              <p className="text-center text-slate-500 text-sm py-6">No attacker IP data.</p>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ── AI Insight (Bottom) ─────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-indigo-500/10 via-purple-500/8 to-transparent border border-indigo-500/20 backdrop-blur-md rounded-2xl p-6">
+        <div className="absolute -top-10 -right-10 w-52 h-52 bg-purple-600/20 blur-[80px] rounded-full pointer-events-none" />
+        <div className="flex items-start gap-4 relative z-10">
+          <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-xl mt-0.5 shrink-0">
+            <Sparkles className="w-6 h-6" />
+          </div>
+          <div className="flex-1 space-y-3 min-w-0">
+            <h3 className="text-lg font-semibold text-indigo-300">AI Security Insight</h3>
+            <div className="space-y-2 text-slate-300 text-sm leading-relaxed">
+              <p>
+                <strong className="text-slate-100">Analisis: </strong>
+                {ai_insight.analysis}
+              </p>
+              <p>
+                <strong className="text-slate-100">Rekomendasi: </strong>
+                {ai_insight.recommendation}
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 pt-1 text-xs text-slate-500">
+              {poweredByIcon}
+              <span>Powered by {ai_insight.powered_by}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -1,15 +1,21 @@
+"""FortiWeb Log Analyzer API - FortiAnalis v3.0"""
 import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import upload
+from app.api import upload, reports
+from app.db import engine, Base
+
+__version__ = "3.0.0"
+
+# Create database tables on startup
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="FortiWeb Log Analyzer API",
-    description="API for processing and analyzing FortiWeb WAF logs",
-    version="1.0.0",
+    description="API for analyzing FortiWeb WAF logs with AI-powered insights and multi-format report export",
+    version=__version__,
 )
 
-# Configure CORS - supports multiple origins via comma-separated env var
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -20,10 +26,11 @@ app.add_middleware(
 )
 
 app.include_router(upload.router, prefix="/api/v1/upload", tags=["upload"])
+app.include_router(reports.router, prefix="/api/v1/reports", tags=["reports"])
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to FortiWeb Log Analyzer API"}
+    return {"message": "Welcome to FortiAnalis - FortiWeb Log Analyzer API"}
 
 @app.get("/health")
 async def health_check():
