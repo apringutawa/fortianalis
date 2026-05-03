@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import upload, reports
 from app.db import engine, Base
 
-__version__ = "3.0.0"
+__version__ = "3.1.0"
 
 # Create database tables on startup
 Base.metadata.create_all(bind=engine)

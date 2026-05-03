@@ -91,6 +91,7 @@ def parse_fortiweb_log(file_path: str) -> dict:
     timeline_counts: dict[str, int] = defaultdict(int)
     attack_types_counts: dict[str, int] = defaultdict(int)
     subdomains_counts: dict[str, int] = defaultdict(int)
+    subdomains_meta: dict[str, dict] = {}  # Store IP and country for each subdomain
     ip_counts: dict[str, int] = defaultdict(int)
 
     try:
@@ -167,19 +168,33 @@ def parse_fortiweb_log(file_path: str) -> dict:
 
             # ── Target App (Destination IP Mapping) ────────────
             dst_ip = (
-                entry.get("dst") 
-                or entry.get("dstip") 
-                or entry.get("dst_ip") 
+                entry.get("dst")
+                or entry.get("dstip")
+                or entry.get("dst_ip")
                 or ""
             ).strip()
             host = (
-                entry.get("http_host")
-                or entry.get("host")
+                entry.get("hostname")      # FortiGate uses "hostname"
+                or entry.get("http_host")  # Fallback for other formats
+                or entry.get("host")       # Fallback for CSV/other formats
                 or ""
             ).strip()
-            
+
             app_name = _get_app_name(dst_ip, host)
             subdomains_counts[app_name] += 1
+
+            # Store metadata for subdomain (IP and source country)
+            if app_name not in subdomains_meta:
+                subdomains_meta[app_name] = {
+                    "ip": dst_ip if dst_ip else None,
+                    "hostname": host if host and host != "N/A" else None,
+                    "src_countries": set()
+                }
+
+            # Track source countries (placeholder for now, can be enhanced with GeoIP)
+            if src_ip:
+                # For now, we'll use a placeholder. In production, use GeoIP lookup
+                subdomains_meta[app_name]["src_countries"].add("—")
 
             # ── Timeline (hour bucket) ────────────────────────
             time_str = entry.get("time") or entry.get("timestamp") or ""
@@ -224,7 +239,13 @@ def parse_fortiweb_log(file_path: str) -> dict:
         ]
 
         subdomains_data = [
-            {"name": k, "attacks": v}
+            {
+                "name": k,
+                "attacks": v,
+                "ip": subdomains_meta.get(k, {}).get("ip"),
+                "hostname": subdomains_meta.get(k, {}).get("hostname"),
+                "country": ", ".join(subdomains_meta.get(k, {}).get("src_countries", {"—"})) or "—"
+            }
             for k, v in sorted(subdomains_counts.items(), key=lambda x: -x[1])[:10]
         ]
 
@@ -282,9 +303,9 @@ def _synthetic_data() -> dict:
             {"name": "Bot", "value": 57},
         ],
         "subdomains": [
-            {"name": "api.example.com", "attacks": 210},
-            {"name": "auth.example.com", "attacks": 140},
-            {"name": "www.example.com", "attacks": 37},
+            {"name": "api.example.com", "attacks": 210, "ip": "10.10.10.5", "hostname": "api.example.com", "country": "ID"},
+            {"name": "auth.example.com", "attacks": 140, "ip": "10.10.10.1", "hostname": "auth.example.com", "country": "ID"},
+            {"name": "www.example.com", "attacks": 37, "ip": "10.10.10.1", "hostname": "www.example.com", "country": "ID"},
         ],
         "attackerIPs": [
             {"ip": "198.51.100.12", "country": "—", "count": 120, "risk": "High"},

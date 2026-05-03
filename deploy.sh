@@ -40,7 +40,7 @@ echo "2️⃣ Deploying Frontend to Vercel..."
 echo "-----------------------------------"
 cd frontend
 vercel login 2>/dev/null || true
-vercel --prod --yes --build-env NEXT_PUBLIC_API_URL=$BACKEND_URL
+vercel --prod --yes --build-env NEXT_PUBLIC_API_URL=$BACKEND_URL --prebuilt
 cd ..
 
 echo ""

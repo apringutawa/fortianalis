@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ShieldAlert, ShieldCheck, Activity, Globe,
-  Sparkles, TrendingUp, Bot, Cpu,
+  Sparkles, TrendingUp, Bot, Cpu, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
@@ -29,8 +29,8 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center gap-4 hover:bg-white/8 transition-colors">
-      <div className={`p-3 rounded-xl bg-white/5 ${color}`}>
+    <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 flex items-center gap-4 hover:bg-white/8 hover:border-white/20 transition-all duration-300 group">
+      <div className={`p-3 rounded-xl bg-white/5 ${color} group-hover:scale-110 transition-transform duration-300`}>
         <Icon className="w-6 h-6" />
       </div>
       <div>
@@ -60,6 +60,9 @@ function RiskBadge({ risk }: { risk: string }) {
 export default function DashboardOverview({ result }: DashboardOverviewProps) {
   const { data, ai_insight, is_demo } = result;
   const { stats, timelineData, attackTypes, subdomains, attackerIPs } = data;
+
+  const [expandedAttackerIPs, setExpandedAttackerIPs] = useState(false);
+  const [expandedSubdomains, setExpandedSubdomains] = useState(false);
 
   const fmt = (n: number) => n.toLocaleString('id-ID');
   const poweredByIcon = ai_insight.powered_by.includes('Gemini')
@@ -131,19 +134,56 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
 
         {/* Top Subdomains */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6">
-          <h3 className="text-base font-medium text-slate-200 mb-5">Top Subdomains Attacked</h3>
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={subdomains.slice(0, 8)} layout="vertical" margin={{ top: 0, right: 10, bottom: 0, left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" horizontal={false} />
-                <XAxis type="number" stroke="#475569" tick={{ fontSize: 11 }} />
-                <YAxis dataKey="name" type="category" width={130} stroke="#475569" tick={{ fontSize: 10 }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #1e293b', borderRadius: '10px', fontSize: 12 }}
-                />
-                <Bar dataKey="attacks" fill="#3b82f6" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-medium text-slate-200">Top Subdomains Attacked</h3>
+            {subdomains.length > 5 && (
+              <button
+                onClick={() => setExpandedSubdomains(!expandedSubdomains)}
+                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                {expandedSubdomains ? (
+                  <>Show Less <ChevronUp className="w-3.5 h-3.5" /></>
+                ) : (
+                  <>Show All <ChevronDown className="w-3.5 h-3.5" /></>
+                )}
+              </button>
+            )}
+          </div>
+          <div className="space-y-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+            {subdomains.slice(0, expandedSubdomains ? subdomains.length : 5).map((sub, i) => {
+              const maxAttacks = subdomains[0]?.attacks || 1;
+              const percentage = (sub.attacks / maxAttacks) * 100;
+
+              return (
+                <div key={i} className="group">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <span className="text-xs text-slate-500 font-mono shrink-0">#{i + 1}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm text-cyan-300 font-medium truncate group-hover:text-cyan-200 transition-colors" title={sub.name}>
+                          {sub.name}
+                        </p>
+                        {sub.ip && (
+                          <p className="text-[10px] text-slate-500 font-mono">{sub.ip}</p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0 ml-3">
+                      <p className="text-sm font-semibold text-slate-200">{fmt(sub.attacks)}</p>
+                      {sub.country && sub.country !== "—" && (
+                        <p className="text-[10px] text-slate-500">{sub.country}</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full transition-all duration-500"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -187,7 +227,21 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
 
         {/* Top Attacker IPs */}
         <div className="bg-white/5 border border-white/10 backdrop-blur-md rounded-2xl p-6 lg:col-span-2">
-          <h3 className="text-base font-medium text-slate-200 mb-4">Top Attacker IPs</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-medium text-slate-200">Top Attacker IPs</h3>
+            {attackerIPs.length > 8 && (
+              <button
+                onClick={() => setExpandedAttackerIPs(!expandedAttackerIPs)}
+                className="flex items-center gap-1 text-xs text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                {expandedAttackerIPs ? (
+                  <>Show Less <ChevronUp className="w-3.5 h-3.5" /></>
+                ) : (
+                  <>Show All <ChevronDown className="w-3.5 h-3.5" /></>
+                )}
+              </button>
+            )}
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left">
               <thead>
@@ -200,7 +254,7 @@ export default function DashboardOverview({ result }: DashboardOverviewProps) {
                 </tr>
               </thead>
               <tbody>
-                {attackerIPs.slice(0, 8).map((row, i) => (
+                {attackerIPs.slice(0, expandedAttackerIPs ? attackerIPs.length : 8).map((row, i) => (
                   <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors group">
                     <td className="py-3 pr-4 text-slate-500 text-xs">{i + 1}</td>
                     <td className="py-3 pr-4 font-mono text-cyan-300 text-xs group-hover:text-cyan-200">

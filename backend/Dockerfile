@@ -21,4 +21,4 @@ RUN mkdir -p data/uploads
 EXPOSE 8001
 
 # Run with production settings
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860", "--workers", "4"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
