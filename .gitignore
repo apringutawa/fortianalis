@@ -38,3 +38,5 @@ docker-compose.override.yml
 test_sample.log
 fortianalis_*.png
 screenshot*.js
+
+.vercel

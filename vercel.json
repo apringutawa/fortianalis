@@ -1,0 +1,12 @@
+{
+  "experimentalServices": {
+    "backend": {
+      "entrypoint": "backend",
+      "routePrefix": "/_/backend"
+    },
+    "hf-space-temp": {
+      "entrypoint": "backend/hf-space-temp",
+      "routePrefix": "/_/hf-space-temp"
+    }
+  }
+}
