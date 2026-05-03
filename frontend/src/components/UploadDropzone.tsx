@@ -20,7 +20,7 @@ export interface AnalysisResult {
     };
     timelineData: { time: string; attacks: number }[];
     attackTypes: { name: string; value: number }[];
-    subdomains: { name: string; attacks: number }[];
+    subdomains: { name: string; attacks: number; ip?: string; hostname?: string; country?: string }[];
     attackerIPs: { ip: string; country: string; count: number; risk: string }[];
   };
   ai_insight: {
