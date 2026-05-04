@@ -16,6 +16,7 @@ services:
     restart: unless-stopped
     networks:
       - fortianalis-network
+    user: root
 
   frontend:
     build:
@@ -31,6 +32,7 @@ services:
     restart: unless-stopped
     networks:
       - fortianalis-network
+    user: root
 
 volumes:
   backend-uploads:
