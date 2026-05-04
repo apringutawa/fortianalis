@@ -83,6 +83,15 @@ echo ""
 echo "=== Setting up Frontend ==="
 cd $PROJECT_DIR/frontend
 
+# Get VPS IP address
+VPS_IP=$(hostname -I | awk '{print $1}')
+echo "Detected VPS IP: $VPS_IP"
+
+# Update .env.local with VPS IP
+cat > .env.local << EOF
+NEXT_PUBLIC_API_URL=http://$VPS_IP:$BACKEND_PORT
+EOF
+
 # Install dependencies and build
 echo "Installing frontend dependencies..."
 npm install
@@ -101,7 +110,7 @@ Type=simple
 User=root
 WorkingDirectory=$PROJECT_DIR/frontend
 Environment="NODE_ENV=production"
-Environment="NEXT_PUBLIC_API_URL=http://localhost:$BACKEND_PORT"
+Environment="NEXT_PUBLIC_API_URL=http://$VPS_IP:$BACKEND_PORT"
 Environment="PORT=$FRONTEND_PORT"
 ExecStart=/usr/bin/npm start
 Restart=always
