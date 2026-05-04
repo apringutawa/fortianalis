@@ -201,20 +201,22 @@ async def export_excel(
     ws1["A1"] = "FortiAnalis - WAF Security Report"
     ws1["A1"].font = title_font
 
-    ws1["A2"] = f"Generated: {datetime.now().strftime('%d %b %Y %H:%M')}"
-    ws1["A2"].font = Font(name="Calibri", size=10, color="64748B")
-    ws1["A3"] = f"File: {report.filename}"
+    ws1["A2"] = f"by KUBU RAYA CSIRT"
+    ws1["A2"].font = Font(name="Calibri", size=10, color="06B6D4")
+    ws1["A3"] = f"Generated: {datetime.now().strftime('%d %b %Y %H:%M')}"
     ws1["A3"].font = Font(name="Calibri", size=10, color="64748B")
+    ws1["A4"] = f"File: {report.filename}"
+    ws1["A4"].font = Font(name="Calibri", size=10, color="64748B")
 
     # Executive Summary Narrative
-    ws1["A5"] = "Executive Summary"
-    ws1["A5"].font = Font(name="Calibri", size=13, bold=True, color="94A3B8")
+    ws1["A6"] = "Executive Summary"
+    ws1["A6"].font = Font(name="Calibri", size=13, bold=True, color="94A3B8")
     exec_summary = narrative.get("executive_summary", "")
-    ws1.merge_cells("A6:B10")
-    ws1["A6"] = exec_summary
-    ws1["A6"].font = Font(name="Calibri", size=10)
-    ws1["A6"].alignment = Alignment(wrap_text=True, vertical="top")
-    ws1.row_dimensions[6].height = 120
+    ws1.merge_cells("A7:B11")
+    ws1["A7"] = exec_summary
+    ws1["A7"].font = Font(name="Calibri", size=10)
+    ws1["A7"].alignment = Alignment(wrap_text=True, vertical="top")
+    ws1.row_dimensions[7].height = 120
 
     summary_data = [
         ["Metric", "Value"],
@@ -224,11 +226,11 @@ async def export_excel(
         ["Block Rate", f"{report.block_rate}%"],
         ["Unique Attacker IPs", report.unique_ips],
     ]
-    for i, row in enumerate(summary_data, start=12):
+    for i, row in enumerate(summary_data, start=13):
         for j, val in enumerate(row, start=1):
             cell = ws1.cell(row=i, column=j, value=val)
             cell.border = thin_border
-            if i == 12:
+            if i == 13:
                 cell.font = header_font
                 cell.fill = header_fill
                 cell.alignment = Alignment(horizontal="center")
@@ -236,7 +238,7 @@ async def export_excel(
                 cell.fill = row_fill_1 if i % 2 == 0 else row_fill_2
         ws1.column_dimensions["A"].width = 25
         ws1.column_dimensions["B"].width = 20
-    ws1.row_dimensions[14].height = 60
+    ws1.row_dimensions[15].height = 60
 
     # Sheet 2: Attack Types
     ws2 = wb.create_sheet("Attack Types")
@@ -454,8 +456,11 @@ async def export_word(
 
     doc.add_paragraph("WAF Security Report").runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
     meta = doc.add_paragraph()
-    meta.add_run(f"File: {report.filename}  |  Generated: {datetime.now().strftime('%d %b %Y %H:%M')}").font.size = Pt(9)
-    meta.runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
+    meta.add_run("by KUBU RAYA CSIRT").font.size = Pt(10)
+    meta.runs[0].font.color.rgb = RGBColor(0x06, 0xB6, 0xD4)
+    meta2 = doc.add_paragraph()
+    meta2.add_run(f"File: {report.filename}  |  Generated: {datetime.now().strftime('%d %b %Y %H:%M')}").font.size = Pt(9)
+    meta2.runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
     doc.add_paragraph("_" * 70)
 
@@ -582,7 +587,7 @@ async def export_word(
     doc.add_paragraph("_" * 70)
     footer = doc.add_paragraph()
     footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    footer.add_run("FortiAnalis v2.0 — Confidential").font.size = Pt(9)
+    footer.add_run("FortiAnalis by KUBU RAYA CSIRT — Confidential").font.size = Pt(9)
     footer.runs[0].font.color.rgb = RGBColor(0x64, 0x74, 0x8B)
 
     buffer = io.BytesIO()
@@ -702,7 +707,7 @@ def _generate_pdf(report: Report, period: str, narrative: dict) -> bytes:
                        textColor=colors.HexColor("#64748b"), fontSize=11, spaceAfter=4)
     ))
     elements.append(Paragraph(
-        f"File: {report.filename} | Generated: {now.strftime('%d %b %Y %H:%M')}",
+        f"by KUBU RAYA CSIRT | File: {report.filename} | Generated: {now.strftime('%d %b %Y %H:%M')}",
         small_style
     ))
     elements.append(HRFlowable(width="100%", thickness=1, color=primary_color, spaceAfter=12))
@@ -926,7 +931,7 @@ def _generate_pdf(report: Report, period: str, narrative: dict) -> bytes:
     elements.append(HRFlowable(width="100%", thickness=0.5,
                                 color=colors.HexColor("#cbd5e1"), spaceAfter=6))
     elements.append(Paragraph(
-        f"FortiAnalis v2.0 — Confidential | {now.strftime('%Y')}",
+        f"FortiAnalis by KUBU RAYA CSIRT — Confidential | {now.strftime('%Y')}",
         small_style
     ))
 

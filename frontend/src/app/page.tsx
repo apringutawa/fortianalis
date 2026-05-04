@@ -96,7 +96,7 @@ export default function Home() {
                 FortiAnalis
               </span>
               <span className="ml-2 text-[10px] text-slate-500 font-mono uppercase tracking-widest">
-                WAF Log Analyzer
+                by KUBU RAYA CSIRT
               </span>
             </div>
           </div>
