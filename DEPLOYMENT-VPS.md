@@ -57,7 +57,11 @@ http://YOUR_VPS_IP
 ### 1. Install Dependencies
 ```bash
 apt update
-apt install -y python3 python3-pip python3-venv nodejs npm nginx git
+apt install -y python3 python3-pip python3-venv git curl nginx
+
+# Install Node.js from NodeSource (LTS version)
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
 ```
 
 ### 2. Clone Repository

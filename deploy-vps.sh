@@ -22,7 +22,12 @@ fi
 # Install system dependencies
 echo "Installing system dependencies..."
 apt update
-apt install -y python3 python3-pip python3-venv nodejs npm git
+apt install -y python3 python3-pip python3-venv git curl
+
+# Install Node.js from NodeSource (LTS version)
+echo "Installing Node.js from NodeSource..."
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
 
 # Clone repository if not exists
 if [ ! -d "$PROJECT_DIR" ]; then
