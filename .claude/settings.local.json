@@ -33,7 +33,12 @@
       "Bash(setx RAILWAY_TOKEN *)",
       "PowerShell(railway up *)",
       "PowerShell(railway status *)",
-      "PowerShell(railway logs *)"
+      "PowerShell(railway logs *)",
+      "Bash(findstr /s /i \"API_URL 127.0.0.1 localhost:8001\" *.ts *.tsx)",
+      "Bash(dir /s /b D:\\\\VIBECODE\\\\fortianalis\\\\frontend\\\\src\\\\*.ts D:\\\\VIBECODE\\\\fortianalis\\\\frontend\\\\src\\\\*.tsx)",
+      "Bash(docker stop *)",
+      "Bash(docker rm *)",
+      "Bash(grep -E \"\\\\.sh$|\\\\.md$|\\\\.txt$\")"
     ]
   }
 }

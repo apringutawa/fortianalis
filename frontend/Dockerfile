@@ -23,6 +23,7 @@ COPY . .
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_ENV production
+ENV NEXT_PUBLIC_API_URL http://localhost:8001
 
 # Build the application
 RUN npm run build
